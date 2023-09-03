@@ -352,7 +352,7 @@ data = train specifies the training data.
 The hyperparameters (n.trees, n.minobsinnode, shrinkage, interaction.depth) are set to the values from best_params.
 distribution = "bernoulli" indicates that the target variable follows a Bernoulli distribution, which is typical for classification problems.
 
-**Making Predictions and Calculating AUC:**
+### Analysing the Dataset**Making Predictions and Calculating AUC:** 
 ```
 test.score = predict(rg.gbm.final, newdata = train, type = 'response', n.trees = best_params$n.trees)
 pROC::auc(pROC::roc(train$store, test.score)) 0.99
@@ -365,6 +365,9 @@ Now let`s see the variable impportance of the dataset
 
 ![image](https://github.com/swasthik62/project2/assets/125183564/9b4fbe93-7c1e-40aa-a11e-35327a54a821)
 
+### Share and Report
+As per the Data analysis we can see that thePopulation, sales1, Sales4, Country, State has a very good corelation betwee the Dependent variable, and also we can see the initial AUC score is 0.75 and after tuning we got the AUC as 0.99 and based on this observation we can see that Random Forest worked out to be a better model and Approximately 25
+locations were selected to open new stores based on this analysis.
 
 
 
