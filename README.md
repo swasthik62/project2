@@ -135,6 +135,16 @@ We are imposing various models to check the performance of the Dataset.
 #### Logistic Regression Model:
 Here we are using Linear Model to remove the VIF values where variables has greater than 10 and this model nothing to do with the classification problem.
 
+```
+for_vif=lm(store~.-store_Type_X..other..
+           -state_alpha_X..other..
+           -sales3-sales0-sales2,data = trn)
+
+sort(vif(for_vif),decreasing = T)[1:3]
+
+summary(for_vif)
+```
+Now we can observe all the VIF values are below 10 and now we can proceed with the Logistic regresson.
 
 
 
