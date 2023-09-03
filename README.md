@@ -47,11 +47,93 @@ There are many missing values and we need to convert some Variables into Numeric
 
 As per the Variable Analysis i have found some inputs and applied it on the dataset.
 
+```
+Id :  drop the variable as this has no correlation.
+sales0 : To numeric
+sales1: To numeric
+sales2 : To numeric
+sales3 : To numeric
+sales4 : To numeric
+country : To numeric
+State : To numeric
+CouSub : To numeric
+countyname : club low frequency cateorories and then create dummies then conver to numeric.
+storecode : Converting into dummies ::not be used  but can be source of a feature
+Areaname :  drop the variable as this has no correlation.
+countytownname : drop the variable as this has no correlation.
+population : To numeric
+state_alpha : club low frequency cateorories and then create dummies then conver to numeric.
+store_Type : club low frequency cateorories and then create dummies then conver to numeric.
+store : categorical 1/0 : target indicator var 1=opened 0=not opened 
+```
 
+### Data Cleaning Process: 
 
+Im doing some data cleansing procedure using recipe functions
 
+Aim :
+1. To remove the unwanted variables
+2. Convert the Variables into Numeric/Charecter/Factor.
+3. To create dummies
+4. To handle the missing values followed by Mean, Median, mode etc.
 
+#converting target var as factor
+```
+p2_train$store=as.factor(p2_train$store)
+```
 
+```
+library(tidymodels)
+dp_pipe=recipe(store~.,data=p2_train) %>%
+  update_role(Id,countytownname,
+              Areaname,new_role = "drop_vars") %>%
+  update_role(State,CouSub,country,population,sales1,sales0,
+              sales2,sales3,sales4,new_role ="to_numeric") %>% 
+  update_role(state_alpha,store_Type,countyname,storecode,new_role = "to_dummies") %>%
+  step_rm(has_role("drop_vars")) %>%
+  step_unknown(has_role("to_dummies"),new_level = "--missing--") %>%
+  step_other(has_role("to_dummies"),threshold = 0.02,other = "--other--") %>%
+  step_dummy(has_role("to_dummies")) %>%
+  step_mutate_at(has_role("to_numeric"),fn=as.numeric) %>% 
+  step_impute_median(all_numeric(),-all_outcomes())
+```
+Once the ```dp_pipe``` is created we need to ```prep``` and ```bake``` the dp_pipe in the next step
+
+```
+dp_pipe=prep(dp_pipe)
+train=bake(dp_pipe,new_data = NULL)
+```
+
+After the recipe funtion there will be no Na or missing values and also there will additional variables were added due to the Create Dummy funtion. Lets check the dataset.
+
+again im running the is.na querry to check the NA's
+
+![image](https://github.com/swasthik62/project2/assets/125183564/cb2d0223-c58c-4fb8-8aa3-da1e830ee041)
+
+``` vis_dat(train) # to plot the train dataset ``` 
+
+![image](https://github.com/swasthik62/project2/assets/125183564/129b379b-fc53-40ce-aeaf-bdd160b184c4)
+
+We can see there is no missing values, all the Variables are converted into  numerical values and Dummies are created.
+
+### Splitting the Dataset
+Split the `train` dataset into two `trn` and `tst` to check the model performance.
+
+```
+set.seed(2) #using this function system cannot ablter any rows throughout the process.
+s=sample(1:nrow(hs_train),0.8*nrow(hs_train)) #we are spliting the data into 80% and 20%
+trn=hs_train[s,]
+tst=hs_train[-s,]
+```
+
+One the Dataset has been splitted we can check the performance of dataset using Different Models.
+
+### Implement and Check with the different models
+
+We are imposing various models to check the performance of the Dataset.
+
+#### Logistic Regression Model:
+Here we are using Linear Model to remove the VIF values where variables has greater than 10 and this model nothing to do with the classification problem.
 
 
 
