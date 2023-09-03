@@ -146,6 +146,45 @@ summary(for_vif)
 ```
 Now we can observe all the VIF values are below 10 and now we can proceed with the Logistic regresson.
 
+```
+log_fit = glm(store~.-store_Type_X..other..
+          -state_alpha_X..other..
+          -sales3-sales0-sales2,data = trn)
+summary(log_fit)
+```
+We can run the AUC values and check the performance on thisdataset
+
+```
+val.score=predict(log_fit,newdata = trn, type = "response")
+pROC::auc(pROC::roc(trn$store,val.score)) #0.753
+
+val.score1=predict(log_fit,newdata = tst, type = "response")
+pROC::auc(pROC::roc(tst$store,val.score1)) ## 0.7252
+```
+
+We can see there are many non colinear variables we need to remove them based on the P-Value
+
+```
+fit=stats::step(log_fit) ##which will drop the high p value
+
+formula(log_fit) # Which will f=give the list of variables
+log_fit.final=glm(store~ sales1 + sales2 +  sales4 +  
+              State + population +  storecode_X..other.. + 
+              state_alpha_GA +   
+              state_alpha_MA +   
+              state_alpha_NH + state_alpha_TX + state_alpha_VA + 
+              state_alpha_VT,data=trn)
+summary(log_fit.final)
+```
+once we are done with this we can proceed with the AUC score
+```
+val.score=predict(log_fit.final,newdata = trn, type = "response")
+pROC::auc(pROC::roc(trn$store,val.score)) #0.7598
+
+val.score1=predict(log_fit.final,newdata = tst, type = "response")
+pROC::auc(pROC::roc(tst$store,val.score1)) #0.7399
+```
+There is no significant differences and we are moving further with the other models
 
 
 
