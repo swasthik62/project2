@@ -154,6 +154,7 @@ summary(log_fit)
 ```
 We can run the AUC values and check the performance on thisdataset
 
+### Calculating the AUC score
 ```
 val.score=predict(log_fit,newdata = trn, type = "response")
 pROC::auc(pROC::roc(trn$store,val.score)) #0.753
@@ -177,6 +178,8 @@ log_fit.final=glm(store~ sales1 + sales2 +  sales4 +
 summary(log_fit.final)
 ```
 once we are done with this we can proceed with the AUC score
+
+### Calculating the AUC score
 ```
 val.score=predict(log_fit.final,newdata = trn, type = "response")
 pROC::auc(pROC::roc(trn$store,val.score)) #0.7598
@@ -185,6 +188,10 @@ val.score1=predict(log_fit.final,newdata = tst, type = "response")
 pROC::auc(pROC::roc(tst$store,val.score1)) #0.7399
 ```
 There is no significant differences and we are moving further with the other models
+
+### Decison Tree Model
+
+dtre
 
 
 
