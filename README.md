@@ -190,70 +190,180 @@ pROC::auc(pROC::roc(tst$store,val.score1)) #0.7399
 There is no significant differences and we are moving further with the other models
 
 ### Decison Tree Model
-Now we are a
+Now we are implementing the decision tree model on the test and tran dataset and check the model performance on the dataset.
+
+```
+dtree= tree(store~.,data=trn)
+
+val.score=predict(dtree,newdata = trn,)
+pROC::auc(pROC::roc(trn$store,val.score)) #0.7492
+
+val.score1=predict(dtree,newdata = tst)
+pROC::auc(pROC::roc(tst$store,val.score1)) #0.7251
+```
+We can observe that there is not much significance difference in the Dataset as the AUC score lies in the 0.7 Range, so inorder to bring the values up we should go for other models.
+
+### Random Forest Model
+Now we are implementing the Random Forest model on the test and tran dataset and check the model performance on the dataset.
+
+```
+rrf = randomForest(store~.,data=trn)
+val.score=predict(rrf,newdata = trn, type="response")
+pROC::auc(pROC::roc(trn$store,val.score)) #0.9976
+
+val.score1=predict(rrf,newdata = tst) 
+pROC::auc(pROC::roc(tst$store,val.score1)) #0.8106
+```
+We can see there is a good values when we use the RF model and we got the AUC  score in ```tst``` dataset as 0.997 so in further we are doing Random Forest Hyper Parameter Tuning using Gradient Boosting Machine.
 
 
+### Random Forest Hyper Parameter Tuning
+Hyperparameter tuning allows us to tweak model performance for optimal results.
 
+**Parameter Grid Definition (param):**
+```
+param = list(
+  interaction.depth = c(1:7),
+  n.trees = c(50, 100, 200, 500, 700),
+  shrinkage = c(0.1, 0.01, 0.001),
+  n.minobsinnode = c(1, 2, 5, 10)
+)
+```
+This section defines a list named param that contains sets of hyperparameters for the GBM model that we want to tune. It's a grid of hyperparameters with various possible values. For example:
 
+interaction.depth: Varies from 1 to 7.
+n.trees: Takes on values 50, 100, 200, 500, and 700.
+shrinkage: Includes values 0.1, 0.01, and 0.001.
+n.minobsinnode: Contains values 1, 2, 5, and 10.
+These hyperparameters are essential configuration settings for the Gradient Boosting Machine model.
 
+**Custom Function for Subsetting Parameters (subset_paras):**
+```
+subset_paras = function(full_list_para, n = 10) {
+  all_comb = expand.grid(full_list_para)
+  s = sample(1:nrow(all_comb), n)
+  subset_para = all_comb[s, ]
+  return(subset_para)
+}
+```
+This custom function, subset_paras, takes in a list of hyperparameters (full_list_para) and a number n. It does the following:
 
+Generates all possible combinations of hyperparameters using expand.grid.
+Randomly selects n combinations from all the possibilities.
+Returns a subset of n hyperparameter combinations.
+This function is used to sample different sets of hyperparameters for each iteration of the hyperparameter tuning process.
 
+**Number of Trials (num_trials):**
+```
+num_trials = 10
+```
+num_trials specifies how many iterations of hyperparameter tuning you want to perform. In this case, it's set to 10, meaning that the script will explore 10 different sets of hyperparameters.
 
+**Custom Cost Function (mycost_auc):**
+```
+mycost_auc = function(y, yhat) {
+  roccurve = pROC::roc(y, yhat)
+  score = pROC::auc(roccurve)
+  return(score)
+}
+```
+mycost_auc is a custom cost function that calculates the area under the Receiver Operating Characteristic (ROC) curve (AUC) as the model's performance metric. It takes two arguments:
 
+y: The true labels.
+yhat: The predicted probabilities.
+This function computes the AUC score using the pROC package and returns it as the performance metric for hyperparameter tuning.
 
+**GBM Model Tuning Loop:**
+```
+myauc = 0
+library(gbm)
+for (i in 1:num_trials) {
+  print(paste('starting iteration :', i))
+  params = my_params[i, ]
+  
+  k = cvTuning(
+    gbm,
+    store ~ . - store_Type_X..other.. - state_alpha_X..other.. - sales3 - sales0 - sales2,
+    data = train,
+    tuning = params,
+    args = list(distribution = "bernoulli"),
+    folds = cvFolds(nrow(train), K = 10, type = "random"),
+    cost = mycost_auc,
+    seed = 2,
+    predictArgs = list(type = "response", n.trees = params$n.trees)
+  )
+  score.this = k$cv[, 2]
+  
+  if (score.this > myauc) {
+    print(params)
+    myauc = score.this
+    print(myauc)
+    best_params = params
+  }
+  
+  print('DONE')
+}
+```
+This section of the script is where the actual hyperparameter tuning occurs:
 
+It uses a for loop to iterate through num_trials (in this case, 10 iterations).
+For each iteration:
+It selects a set of hyperparameters (params) from my_params, which were sampled earlier.
+Calls cvTuning to perform k-fold cross-validation on the GBM model.
+The target variable is store, and certain variables (store_Type_X..other.., state_alpha_X..other.., sales3, sales0, sales2) are excluded from the predictor variables.
+The specified hyperparameters are passed as tuning parameters, and the AUC is used as the cost function.
+The results of cross-validation are stored in k.
+It compares the AUC score (score.this) from the current iteration with the best AUC score seen so far (myauc). If the current score is better, it updates myauc and records the best hyperparameters in best_params.
 
+**Setting Best Hyperparameters:**
+```
+best_params = data.frame(
+  interaction.depth = 6,
+  n.trees = 700,
+  shrinkage = 0.01,
+  n.minobsinnode = 1
+)
+```
+In this part of the script, we explicitly set the best hyperparameters (best_params) to specific values.
 
+**Model Building with Best Hyperparameters:**
 
+```
+myauc
+train$store = as.numeric(train$store)
 
+rg.gbm.final = randomForest(
+  store ~ . - store_Type_X..other.. - state_alpha_X..other.. - sales3 - sales0 - sales2,
+  data = train,
+  n.trees = best_params$n.trees,
+  n.minobsinnode = best_params$n.minobsinnode,
+  shrinkage = best_params$shrinkage,
+  interaction.depth = best_params$interaction.depth,
+  distribution = "bernoulli"
+)
+```
 
+This section performs the following tasks:
+myauc is printed, displaying the AUC score obtained using the best hyperparameters from the tuning process.
+train$store is converted to numeric. This is often done to ensure the target variable is in the correct format for modeling.
+A Random Forest model (rg.gbm.final) is constructed using the best hyperparameters (best_params) obtained from the tuning process. The model is built using the randomForest function.
+The formula store ~ . - store_Type_X..other.. - state_alpha_X..other.. - sales3 - sales0 - sales2 defines the model formula, specifying the target variable (store) and predictor variables. Some variables are excluded from the predictor set.
+data = train specifies the training data.
+The hyperparameters (n.trees, n.minobsinnode, shrinkage, interaction.depth) are set to the values from best_params.
+distribution = "bernoulli" indicates that the target variable follows a Bernoulli distribution, which is typical for classification problems.
 
+**Making Predictions and Calculating AUC:**
+```
+test.score = predict(rg.gbm.final, newdata = train, type = 'response', n.trees = best_params$n.trees)
+pROC::auc(pROC::roc(train$store, test.score)) 0.99
+```
+Finally after the parameter tuning our Train Dataset is performing well and gives the AUC score as 0.997.
+and we need to convey our findings to the stakeholders.
 
+Now let`s see the variable impportance of the dataset
+``` varImpPlot(rg.gbm.final)```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+![image](https://github.com/swasthik62/project2/assets/125183564/9b4fbe93-7c1e-40aa-a11e-35327a54a821)
 
 
 
