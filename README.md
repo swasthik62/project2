@@ -1,4 +1,4 @@
-# PROJECT-1 RETAIL
+# PROJECT-2 RETAIL
 
 ## PROJECT DESCRIPTION
 Here in this project we are doing analysis on Real estate Price prediction using the Logistic Regression, Random Forest, Decision Tree, xgboost and GBM model and choose the best model and Tune the model with Hyper Parametre tuning then prediction for Whether we can open the store or not. Also we are going to explain the entire project on the basis of Data Analysis procedure of Ask, Prepare, Process, Analyze, Share and Report using R-Programming.
