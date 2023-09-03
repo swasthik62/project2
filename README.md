@@ -190,8 +190,7 @@ pROC::auc(pROC::roc(tst$store,val.score1)) #0.7399
 There is no significant differences and we are moving further with the other models
 
 ### Decison Tree Model
-
-dtre
+Now we are a
 
 
 
