@@ -14,6 +14,21 @@ be analyzed and for model building.
 Once i have collected the data from stakeholder i have received the Dataset which has 3338 observations and 17 variables. 
 In the initial step im importing the  Dataset to the R and started to work on the Dataset.
 
+**Importing the libraries**
+
+```
+library(vif)
+library(tidymodels)
+library(tidyverse)
+library(pROC)
+library(ggplot2)
+library(cvTools)
+library(dplyr)
+library(randomForest)
+library(car)
+library(tree)
+```
+
 ```
 getwd()
 setwd("C:/DATA ANALYTICS/R PROGRAMMING/PROJECT 2") #Setting the working directory
@@ -187,6 +202,15 @@ pROC::auc(pROC::roc(trn$store,val.score)) #0.7598
 val.score1=predict(log_fit.final,newdata = tst, type = "response")
 pROC::auc(pROC::roc(tst$store,val.score1)) #0.7399
 ```
+
+Let`s plot the AUC score based on Sensitivity and specificity.
+```
+roc_obj <- roc(train$store, val.score)
+plot(roc_obj, main="ROC Curve for Logistic Regression", print.auc=TRUE)
+```
+![image](https://github.com/swasthik62/project2/assets/125183564/5166f6f2-97aa-44a6-87e8-b8d49353c8a8)
+
+
 There is no significant differences and we are moving further with the other models
 
 ### Decison Tree Model
@@ -359,6 +383,16 @@ pROC::auc(pROC::roc(train$store, test.score)) 0.99
 ```
 Finally after the parameter tuning our Train Dataset is performing well and gives the AUC score as 0.997.
 and we need to convey our findings to the stakeholders.
+
+Let`s plot the AUC score according to the Sensitivity and Specificity.
+
+```
+roc_obj <- roc(train$store, test.score)
+plot(roc_obj, main="ROC Curve for Logistic Regression", print.auc=TRUE)
+```
+
+![image](https://github.com/swasthik62/project2/assets/125183564/f64aa57f-6211-4713-b32d-1d0422aeb223)
+
 
 Now let`s see the variable impportance of the dataset
 ``` varImpPlot(rg.gbm.final)```
